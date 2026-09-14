@@ -3,7 +3,6 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import os
 import threading
 from flask import Flask
@@ -80,7 +79,8 @@ def run_telegram_bot():
     options.add_argument('--disable-dev-shm-usage') 
 
     print("🌐 Website open aagudhu...")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    # Selenium 4-ன் புதிய முறைப்படி webdriver_manager தேவையில்லை
+    driver = webdriver.Chrome(options=options)
     driver.get('https://tirangaprediction.ai/prediction.html')
     print("⏳ Page load aagudhu wait pannunga...")
     time.sleep(5)
