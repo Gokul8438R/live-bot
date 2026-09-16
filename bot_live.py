@@ -30,7 +30,7 @@ def run_telegram_bot():
     ALERT_CHAT_ID = '@my_bot_alerts_123' 
 
     # Betting Levels & Counters
-    betting_levels = [1, 3, 7, 15, 31, 63, 127, 255]
+    betting_levels = [1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191]
     current_bet_index = 0  
     consecutive_wins = 0  
 
