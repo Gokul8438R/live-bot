@@ -24,12 +24,9 @@ def run_telegram_bot():
     TOKEN = '8596237137:AAECX8V2uoegggsNHDMiI5e943Dd6WADdGg'
     CHAT_ID = '-1003717180891'
     REFER_LINK = 'https://tirangaclub.top/#/register?invitationCode=5554419196155'
-    WIN_GIF_URL = 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWcwd3d5cWRkdWJjdzN5bzZ2NzY1c2F6cHI1cmZ0YzY0eHllMXIyMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ToMjGpyO2OVfPLpoxu8/giphy.gif' 
-
-    PROMO_IMAGE_LOCAL_PATH = 'refer.jpg'
     ALERT_CHAT_ID = '@my_bot_alerts_123' 
 
-    # Betting Levels & Counters
+    # Betting Levels
     betting_levels = [1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191]
     current_bet_index = 0  
     consecutive_wins = 0  
@@ -39,36 +36,26 @@ def run_telegram_bot():
     def send_telegram_message(text):
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         try:
-            response = requests.post(url, json={'chat_id': CHAT_ID, 'text': text})
-            print(f"✅ Text Sent: {response.status_code}")
-        except Exception as e:
-            print(f"⚠️ Text error: {e}")
-
-    def send_win_gif():
-        url = f"https://api.telegram.org/bot{TOKEN}/sendAnimation"
-        caption = f"✅ WIN WIN WIN! ✅\n\n🎯 Play Now and Earn: {REFER_LINK}"
-        try:
-            requests.post(url, json={'chat_id': CHAT_ID, 'animation': WIN_GIF_URL, 'caption': caption})
-            print(f"🎁 WIN GIF Sent!")
-        except Exception as e:
-             print(f"⚠️ GIF error: {e}")
-
-    def send_promo_image():
-        url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
-        caption = f"✨ Use the Trick and play and Eran Now 💯\n\n⚡️ Resister Now : {REFER_LINK}\n\n🔥 It's Your own Risk 🏹"
-        if not os.path.exists(PROMO_IMAGE_LOCAL_PATH):
-            return 
-        try:
-            with open(PROMO_IMAGE_LOCAL_PATH, 'rb') as photo:
-                requests.post(url, data={'chat_id': CHAT_ID, 'caption': caption}, files={'photo': photo})
+            requests.post(url, json={'chat_id': CHAT_ID, 'text': text})
         except Exception:
             pass
+
+    # Pudhu Win Message Format
+    def send_win_message(period, prediction):
+        last_3 = str(period)[-3:]
+        pred_upper = str(prediction).upper()
+        msg = f"{pred_upper} Last three no ({last_3})✅ WIN WIN WIN! ✅"
+        send_telegram_message(msg)
+
+    # Pudhu Promo Message (No Image)
+    def send_promo_message():
+        msg = f"✨ Use the Trick and play and Earn Now 💯\n\n⚡️ Register Now : {REFER_LINK}\n\n🔥 It's Your own Risk 🏹"
+        send_telegram_message(msg)
 
     def send_alert_message(text):
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         try:
             requests.post(url, json={'chat_id': ALERT_CHAT_ID, 'text': text})
-            print(f"🚨 ALERT Sent!")
         except Exception:
             pass
 
@@ -78,23 +65,19 @@ def run_telegram_bot():
     options.add_argument('--no-sandbox') 
     options.add_argument('--disable-dev-shm-usage') 
 
-    print("🌐 Website open aagudhu...")
-    # Selenium 4-ன் புதிய முறைப்படி webdriver_manager தேவையில்லை
     driver = webdriver.Chrome(options=options)
     driver.get('https://tirangaprediction.ai/prediction.html')
-    print("⏳ Page load aagudhu wait pannunga...")
     time.sleep(5)
 
     last_period_number = None
     last_predicted_size = None
 
-    print("🚀 Bot started! ULTRA FAST mode-la thedudhu...")
-
     while True:
         try:
             current_time = time.time()
-            if (current_time - last_promo_time) >= 300: 
-                send_promo_image()
+            # 15 minutes = 900 seconds
+            if (current_time - last_promo_time) >= 900: 
+                send_promo_message()
                 last_promo_time = current_time
 
             current_period = driver.find_element(By.ID, "nextIssue").text 
@@ -108,32 +91,40 @@ def run_telegram_bot():
                 except Exception:
                     time.sleep(0.2)
                     continue 
-                
-                print(f"⚡ FAST UPDATE -> Period: {current_period} | Predict: {current_prediction} | Last Result: {actual_last_result}")
 
-                # ⚡ MODHALLA PALAYA RESULT-A CHECK PANNI GIF ANUPPUROM ⚡
+                # Result checking logic
                 if last_period_number is not None:
                     if last_predicted_size and last_predicted_size.lower() in actual_last_result.lower():
-                        send_win_gif()
+                        # Win
+                        send_win_message(last_period_number, last_predicted_size)
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
                         if consecutive_wins == 5:
-                            send_alert_message("🎉 SUPER: 5 Continuous WINS! 🎉\n\n✅ Thodarndhu 5 period WIN aagiduchu!\n🔥 Bot is performing great!")
+                            send_alert_message("🎉 SUPER: 5 Continuous WINS! 🎉")
                             consecutive_wins = 0  
                     else:
+                        # Loss
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
                         if current_bet_index == 5:
-                            send_alert_message(f"🚨 WARNING: 5 Continuous Losses! 🚨\n\n❌ Last 5 periods failed.\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X\n👀 Please check the game manually!")
+                            send_alert_message(f"🚨 WARNING: 5 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
                         if current_bet_index >= len(betting_levels):
                             current_bet_index = 0
 
-                # ⚡ ADHUKKU APRAM PUDHU PREDICTION-A ANUPPUROM ⚡
+                # Current Prediction Message Format
                 bet_amount = betting_levels[current_bet_index]
-                msg = f"🔮 LIVE PREDICTION 🔮\n\n📌 Issue: {current_period}\n👉 Predict: {current_prediction}\n💰 Betting amount: {bet_amount}X\n\n⏳ Bet Open..."
+                
+                if str(current_prediction).upper() == "BIG":
+                    icon = "▫️"
+                    pred_text = "BIG  " # Extra spaces added to align with SMALL
+                else:
+                    icon = "▪️"
+                    pred_text = "SMALL"
+                    
+                msg = f"LIVE | {current_period}\n{icon}{pred_text} | {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
@@ -148,10 +139,8 @@ def run_telegram_bot():
 # 3. RUN BOTH FLASK SERVER & BOT
 # ==========================================
 if __name__ == '__main__':
-    # Bot-ஐ Background-ல் ரன் செய்ய
     bot_thread = threading.Thread(target=run_telegram_bot)
     bot_thread.start()
     
-    # Flask Server-ஐ ரன் செய்ய (Render-க்காக)
     port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port)  
