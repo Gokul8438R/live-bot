@@ -38,7 +38,6 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    # Update 1: Removed period numbers from win message
     def send_win_message(prediction):
         pred_upper = str(prediction).upper()
         msg = f"{pred_upper} ✅ WIN WIN WIN! ✅"
@@ -77,7 +76,6 @@ def run_telegram_bot():
             current_period = driver.find_element(By.ID, "nextIssue").text 
             
             if current_period != last_period_number and current_period != "":
-                # Update 2: Reduced sleep time from 0.3 to 0.1 for faster fetch
                 time.sleep(0.1) 
                 
                 try:
@@ -93,15 +91,17 @@ def run_telegram_bot():
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
-                        if consecutive_wins == 10:
-                            send_alert_message("🎉 SUPER: 10 Continuous WINS! 🎉")
+                        # 8 Times Win Alert
+                        if consecutive_wins == 8:
+                            send_alert_message("🎉 SUPER: 8 Continuous WINS! 🎉")
                             consecutive_wins = 0  
                     else:
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
-                        if current_bet_index == 10:
-                            send_alert_message(f"🚨 WARNING: 10 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
+                        # 8 Times Loss Alert
+                        if current_bet_index == 8:
+                            send_alert_message(f"🚨 WARNING: 8 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
                         if current_bet_index >= len(betting_levels):
                             current_bet_index = 0
@@ -118,7 +118,6 @@ def run_telegram_bot():
         except Exception:
             pass 
         
-        # Update 3: Reduced loop sleep time from 0.2 to 0.05 for immediate detection
         time.sleep(0.05)
 
 if __name__ == '__main__':
