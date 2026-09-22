@@ -20,13 +20,11 @@ def keep_alive():
 # 2. MAIN TELEGRAM BOT CODE
 # ==========================================
 def run_telegram_bot():
-    # Ungaloda Telegram Details
     TOKEN = '8596237137:AAECX8V2uoegggsNHDMiI5e943Dd6WADdGg'
     CHAT_ID = '-1003717180891'
     REFER_LINK = 'https://tirangaclub.top/#/register?invitationCode=5554419196155'
     ALERT_CHAT_ID = '@my_bot_alerts_123' 
 
-    # Betting Levels
     betting_levels = [1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191]
     current_bet_index = 0  
     consecutive_wins = 0  
@@ -40,15 +38,12 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    # Pudhu Win Message Format
-    def send_win_message(period, prediction):
-        last_3 = str(period)[-3:]
+    # Update 1: Removed period numbers from win message
+    def send_win_message(prediction):
         pred_upper = str(prediction).upper()
-        # Example: BIG (285) ✅ WIN WIN WIN! ✅
-        msg = f"{pred_upper} ({last_3}) ✅ WIN WIN WIN! ✅"
+        msg = f"{pred_upper} ✅ WIN WIN WIN! ✅"
         send_telegram_message(msg)
 
-    # Pudhu Promo Message (No Image, 15 mins once)
     def send_promo_message():
         msg = f"✨ Use the Trick and play and Earn Now 💯\n\n⚡️ Register Now : {REFER_LINK}\n\n🔥 It's Your own Risk 🏹"
         send_telegram_message(msg)
@@ -60,7 +55,6 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    # Headless Chrome Options for Render Server
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
     options.add_argument('--no-sandbox') 
@@ -76,7 +70,6 @@ def run_telegram_bot():
     while True:
         try:
             current_time = time.time()
-            # 15 minutes = 900 seconds
             if (current_time - last_promo_time) >= 900: 
                 send_promo_message()
                 last_promo_time = current_time
@@ -84,40 +77,35 @@ def run_telegram_bot():
             current_period = driver.find_element(By.ID, "nextIssue").text 
             
             if current_period != last_period_number and current_period != "":
-                time.sleep(0.3) 
+                # Update 2: Reduced sleep time from 0.3 to 0.1 for faster fetch
+                time.sleep(0.1) 
                 
                 try:
                     current_prediction = driver.find_element(By.ID, "currentPrediction").text 
                     actual_last_result = driver.find_element(By.XPATH, "(//div[contains(@class, 'result-type')])[1]").text 
                 except Exception:
-                    time.sleep(0.2)
+                    time.sleep(0.1)
                     continue 
 
-                # Result checking logic
                 if last_period_number is not None:
                     if last_predicted_size and last_predicted_size.lower() in actual_last_result.lower():
-                        # Win
-                        send_win_message(last_period_number, last_predicted_size)
+                        send_win_message(last_predicted_size)
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
-                        # 10 Times Win Alert
                         if consecutive_wins == 10:
                             send_alert_message("🎉 SUPER: 10 Continuous WINS! 🎉")
                             consecutive_wins = 0  
                     else:
-                        # Loss
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
-                        # 10 Times Loss Alert
                         if current_bet_index == 10:
                             send_alert_message(f"🚨 WARNING: 10 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
                         if current_bet_index >= len(betting_levels):
                             current_bet_index = 0
 
-                # Current Prediction Message Format
                 bet_amount = betting_levels[current_bet_index]
                 pred_upper = str(current_prediction).upper()
                 
@@ -130,11 +118,9 @@ def run_telegram_bot():
         except Exception:
             pass 
         
-        time.sleep(0.2)
+        # Update 3: Reduced loop sleep time from 0.2 to 0.05 for immediate detection
+        time.sleep(0.05)
 
-# ==========================================
-# 3. RUN BOTH FLASK SERVER & BOT
-# ==========================================
 if __name__ == '__main__':
     bot_thread = threading.Thread(target=run_telegram_bot)
     bot_thread.start()
