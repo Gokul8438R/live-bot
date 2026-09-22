@@ -44,10 +44,11 @@ def run_telegram_bot():
     def send_win_message(period, prediction):
         last_3 = str(period)[-3:]
         pred_upper = str(prediction).upper()
-        msg = f"{pred_upper} Last three no ({last_3})✅ WIN WIN WIN! ✅"
+        # Example: BIG (285) ✅ WIN WIN WIN! ✅
+        msg = f"{pred_upper} ({last_3}) ✅ WIN WIN WIN! ✅"
         send_telegram_message(msg)
 
-    # Pudhu Promo Message (No Image)
+    # Pudhu Promo Message (No Image, 15 mins once)
     def send_promo_message():
         msg = f"✨ Use the Trick and play and Earn Now 💯\n\n⚡️ Register Now : {REFER_LINK}\n\n🔥 It's Your own Risk 🏹"
         send_telegram_message(msg)
@@ -100,31 +101,27 @@ def run_telegram_bot():
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
-                        if consecutive_wins == 5:
-                            send_alert_message("🎉 SUPER: 5 Continuous WINS! 🎉")
+                        # 10 Times Win Alert
+                        if consecutive_wins == 10:
+                            send_alert_message("🎉 SUPER: 10 Continuous WINS! 🎉")
                             consecutive_wins = 0  
                     else:
                         # Loss
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
-                        if current_bet_index == 5:
-                            send_alert_message(f"🚨 WARNING: 5 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
+                        # 10 Times Loss Alert
+                        if current_bet_index == 10:
+                            send_alert_message(f"🚨 WARNING: 10 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
                         if current_bet_index >= len(betting_levels):
                             current_bet_index = 0
 
                 # Current Prediction Message Format
                 bet_amount = betting_levels[current_bet_index]
+                pred_upper = str(current_prediction).upper()
                 
-                if str(current_prediction).upper() == "BIG":
-                    icon = "▫️"
-                    pred_text = "BIG  " # Extra spaces added to align with SMALL
-                else:
-                    icon = "▪️"
-                    pred_text = "SMALL"
-                    
-                msg = f"LIVE | {current_period}\n{icon}{pred_text} | {bet_amount}X"
+                msg = f"🔮 LIVE : {current_period}\n👉  {pred_upper} : {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
@@ -143,4 +140,4 @@ if __name__ == '__main__':
     bot_thread.start()
     
     port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)  
+    app.run(host='0.0.0.0', port=port)
