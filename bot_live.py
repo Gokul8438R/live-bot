@@ -91,17 +91,17 @@ def run_telegram_bot():
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
-                        # 7 Times Win Alert
-                        if consecutive_wins == 7:
-                            send_alert_message("🎉 SUPER: 7 Continuous WINS! 🎉")
+                        # 6 Times Win Alert
+                        if consecutive_wins == 6:
+                            send_alert_message("🎉 SUPER: 6 Continuous WINS! 🎉")
                             consecutive_wins = 0  
                     else:
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
-                        # 7 Times Loss Alert
-                        if current_bet_index == 7:
-                            send_alert_message(f"🚨 WARNING: 7 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
+                        # 6 Times Loss Alert
+                        if current_bet_index == 6:
+                            send_alert_message(f"🚨 WARNING: 6 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
                         if current_bet_index >= len(betting_levels):
                             current_bet_index = 0
@@ -109,7 +109,6 @@ def run_telegram_bot():
                 bet_amount = betting_levels[current_bet_index]
                 pred_upper = str(current_prediction).upper()
                 
-                # Pudhu Message Format
                 msg = f"🔮 LIVE PREDICTION 🔮\n\n📌 Issue: {current_period}\n👉 Predict: {pred_upper}\n💰 Betting amount: {bet_amount}X"
                 send_telegram_message(msg)
                 
