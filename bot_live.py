@@ -1,12 +1,12 @@
 import time
 import requests
-import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 import os
 import threading
 from flask import Flask
+import random
 
 # ==========================================
 # 1. FLASK WEB SERVER SETUP (For Render 24/7)
@@ -55,30 +55,28 @@ def run_telegram_bot():
             pass
 
     # ==========================================
-    # PUDHU LOGIC: Custom Random & Pattern Predictor
+    # SMART TREND PREDICTOR LOGIC
     # ==========================================
-    def get_custom_prediction(period_str):
+    def get_trend_prediction(history_results):
         try:
-            # Period number-oda kadaisi 3 numbers edukurom
-            last_3_digits = int(str(period_str)[-3:])
-            
-            # Pattern and Randomness calculation
-            calc_value = (last_3_digits * 7) % 10
-            
-            # 5% pure random surprise
-            if random.random() < 0.05: 
+            if not history_results:
                 return random.choice(["BIG", "SMALL"])
                 
-            if calc_value >= 5:
+            # கடைசியாக வந்த 3 ரிசல்ட்களை எடுக்கிறோம்
+            recent_trends = history_results[:3]
+            big_count = sum(1 for res in recent_trends if "big" in res.lower())
+            small_count = sum(1 for res in recent_trends if "small" in res.lower())
+            
+            # எது அதிகமாக வந்துள்ளதோ அதையே கணிக்கிறோம் (Trend following)
+            if big_count > small_count:
                 return "BIG"
-            else:
+            elif small_count > big_count:
                 return "SMALL"
-                
+            else:
+                return random.choice(["BIG", "SMALL"])
         except Exception:
-            # Error vandhal pure random
             return random.choice(["BIG", "SMALL"])
 
-    # Headless Chrome Options for Render
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
     options.add_argument('--no-sandbox') 
@@ -90,11 +88,11 @@ def run_telegram_bot():
 
     last_period_number = None
     last_predicted_size = None
+    history_list = [] # முந்தைய முடிவுகளை சேமிக்க
 
     while True:
         try:
             current_time = time.time()
-            # Promo message every 15 minutes (900 seconds)
             if (current_time - last_promo_time) >= 900: 
                 send_promo_message()
                 last_promo_time = current_time
@@ -105,11 +103,16 @@ def run_telegram_bot():
                 time.sleep(0.1) 
                 
                 try:
-                    # Namma custom logic use panni prediction edukurom
-                    current_prediction = get_custom_prediction(current_period) 
-                    
-                    # Result-a website la irundhu edukurom
+                    # கடைசியாக வந்த முடிவை எடுக்கிறோம்
                     actual_last_result = driver.find_element(By.XPATH, "(//div[contains(@class, 'result-type')])[1]").text 
+                    
+                    # வரலாற்றில் சேமிக்கிறோம் (Trend கணிக்க)
+                    if actual_last_result:
+                        history_list.insert(0, actual_last_result)
+                        if len(history_list) > 10:
+                            history_list.pop()
+                            
+                    current_prediction = get_trend_prediction(history_list)
                 except Exception:
                     time.sleep(0.1)
                     continue 
@@ -120,7 +123,6 @@ def run_telegram_bot():
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
-                        # 6 Times Win Alert
                         if consecutive_wins == 6:
                             send_alert_message("🎉 SUPER: 6 Continuous WINS! 🎉")
                             consecutive_wins = 0  
@@ -128,7 +130,6 @@ def run_telegram_bot():
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
-                        # 6 Times Loss Alert
                         if current_bet_index == 6:
                             send_alert_message(f"🚨 WARNING: 6 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
@@ -136,10 +137,8 @@ def run_telegram_bot():
                             current_bet_index = 0
 
                 bet_amount = betting_levels[current_bet_index]
-                pred_upper = str(current_prediction).upper()
                 
-                # Pudhu Prediction Message Format
-                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {pred_upper}\n💰 : {bet_amount}X"
+                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {current_prediction}\n💰 : {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
@@ -150,9 +149,6 @@ def run_telegram_bot():
         
         time.sleep(0.05)
 
-# ==========================================
-# 3. RUN BOTH FLASK SERVER & BOT
-# ==========================================
 if __name__ == '__main__':
     bot_thread = threading.Thread(target=run_telegram_bot)
     bot_thread.start()
