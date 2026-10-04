@@ -6,7 +6,6 @@ from selenium.webdriver.chrome.service import Service
 import os
 import threading
 from flask import Flask
-import random
 
 # ==========================================
 # 1. FLASK WEB SERVER SETUP (For Render 24/7)
@@ -39,6 +38,7 @@ def run_telegram_bot():
         except Exception:
             pass
 
+    # புதிய Win Message Format
     def send_win_message():
         msg = "You Are WIN! ✅\nGo to Next Step"
         send_telegram_message(msg)
@@ -54,29 +54,6 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    # ==========================================
-    # SMART TREND PREDICTOR LOGIC
-    # ==========================================
-    def get_trend_prediction(history_results):
-        try:
-            if not history_results:
-                return random.choice(["BIG", "SMALL"])
-                
-            # கடைசியாக வந்த 3 ரிசல்ட்களை எடுக்கிறோம்
-            recent_trends = history_results[:3]
-            big_count = sum(1 for res in recent_trends if "big" in res.lower())
-            small_count = sum(1 for res in recent_trends if "small" in res.lower())
-            
-            # எது அதிகமாக வந்துள்ளதோ அதையே கணிக்கிறோம் (Trend following)
-            if big_count > small_count:
-                return "BIG"
-            elif small_count > big_count:
-                return "SMALL"
-            else:
-                return random.choice(["BIG", "SMALL"])
-        except Exception:
-            return random.choice(["BIG", "SMALL"])
-
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
     options.add_argument('--no-sandbox') 
@@ -88,7 +65,6 @@ def run_telegram_bot():
 
     last_period_number = None
     last_predicted_size = None
-    history_list = [] # முந்தைய முடிவுகளை சேமிக்க
 
     while True:
         try:
@@ -103,16 +79,8 @@ def run_telegram_bot():
                 time.sleep(0.1) 
                 
                 try:
-                    # கடைசியாக வந்த முடிவை எடுக்கிறோம்
+                    current_prediction = driver.find_element(By.ID, "currentPrediction").text 
                     actual_last_result = driver.find_element(By.XPATH, "(//div[contains(@class, 'result-type')])[1]").text 
-                    
-                    # வரலாற்றில் சேமிக்கிறோம் (Trend கணிக்க)
-                    if actual_last_result:
-                        history_list.insert(0, actual_last_result)
-                        if len(history_list) > 10:
-                            history_list.pop()
-                            
-                    current_prediction = get_trend_prediction(history_list)
                 except Exception:
                     time.sleep(0.1)
                     continue 
@@ -123,6 +91,7 @@ def run_telegram_bot():
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
+                        # 6 Times Win Alert
                         if consecutive_wins == 6:
                             send_alert_message("🎉 SUPER: 6 Continuous WINS! 🎉")
                             consecutive_wins = 0  
@@ -130,6 +99,7 @@ def run_telegram_bot():
                         current_bet_index += 1
                         consecutive_wins = 0  
                         
+                        # 6 Times Loss Alert
                         if current_bet_index == 6:
                             send_alert_message(f"🚨 WARNING: 6 Continuous Losses! 🚨\n⚠️ Next bet multiplier: {betting_levels[current_bet_index]}X")
                         
@@ -137,8 +107,10 @@ def run_telegram_bot():
                             current_bet_index = 0
 
                 bet_amount = betting_levels[current_bet_index]
+                pred_upper = str(current_prediction).upper()
                 
-                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {current_prediction}\n💰 : {bet_amount}X"
+                # புதிய Prediction Message Format
+                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {pred_upper}\n💰 : {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
