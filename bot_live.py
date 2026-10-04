@@ -38,7 +38,6 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    # புதிய Win Message Format
     def send_win_message():
         msg = "You Are WIN! ✅\nGo to Next Step"
         send_telegram_message(msg)
@@ -53,6 +52,19 @@ def run_telegram_bot():
             requests.post(url, json={'chat_id': ALERT_CHAT_ID, 'text': text})
         except Exception:
             pass
+
+    # PUDHU LOGIC: Custom Prediction Function
+    def get_custom_prediction(period_str):
+        try:
+            last_2_digits = str(period_str)[-2:] # Get last two numbers
+            total = int(last_2_digits[0]) + int(last_2_digits[1])
+            # Even number -> BIG, Odd number -> SMALL
+            if total % 2 == 0:
+                return "BIG"
+            else:
+                return "SMALL"
+        except Exception:
+            return "BIG" # Fallback
 
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
@@ -79,7 +91,8 @@ def run_telegram_bot():
                 time.sleep(0.1) 
                 
                 try:
-                    current_prediction = driver.find_element(By.ID, "currentPrediction").text 
+                    # Ippo website prediction theva illa, namma trick use pandrom
+                    current_prediction = get_custom_prediction(current_period) 
                     actual_last_result = driver.find_element(By.XPATH, "(//div[contains(@class, 'result-type')])[1]").text 
                 except Exception:
                     time.sleep(0.1)
@@ -107,10 +120,9 @@ def run_telegram_bot():
                             current_bet_index = 0
 
                 bet_amount = betting_levels[current_bet_index]
-                pred_upper = str(current_prediction).upper()
                 
-                # புதிய Prediction Message Format
-                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {pred_upper}\n💰 : {bet_amount}X"
+                # Pudhu Prediction Message Format
+                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {current_prediction}\n💰 : {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
