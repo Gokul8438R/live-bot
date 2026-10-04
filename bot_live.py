@@ -1,5 +1,6 @@
 import time
 import requests
+import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -53,19 +54,31 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    # PUDHU LOGIC: Custom Prediction Function
+    # ==========================================
+    # PUDHU LOGIC: Custom Random & Pattern Predictor
+    # ==========================================
     def get_custom_prediction(period_str):
         try:
-            last_2_digits = str(period_str)[-2:] # Get last two numbers
-            total = int(last_2_digits[0]) + int(last_2_digits[1])
-            # Even number -> BIG, Odd number -> SMALL
-            if total % 2 == 0:
+            # Period number-oda kadaisi 3 numbers edukurom
+            last_3_digits = int(str(period_str)[-3:])
+            
+            # Pattern and Randomness calculation
+            calc_value = (last_3_digits * 7) % 10
+            
+            # 5% pure random surprise
+            if random.random() < 0.05: 
+                return random.choice(["BIG", "SMALL"])
+                
+            if calc_value >= 5:
                 return "BIG"
             else:
                 return "SMALL"
+                
         except Exception:
-            return "BIG" # Fallback
+            # Error vandhal pure random
+            return random.choice(["BIG", "SMALL"])
 
+    # Headless Chrome Options for Render
     options = webdriver.ChromeOptions()
     options.add_argument('--headless=new') 
     options.add_argument('--no-sandbox') 
@@ -81,6 +94,7 @@ def run_telegram_bot():
     while True:
         try:
             current_time = time.time()
+            # Promo message every 15 minutes (900 seconds)
             if (current_time - last_promo_time) >= 900: 
                 send_promo_message()
                 last_promo_time = current_time
@@ -91,8 +105,10 @@ def run_telegram_bot():
                 time.sleep(0.1) 
                 
                 try:
-                    # Ippo website prediction theva illa, namma trick use pandrom
+                    # Namma custom logic use panni prediction edukurom
                     current_prediction = get_custom_prediction(current_period) 
+                    
+                    # Result-a website la irundhu edukurom
                     actual_last_result = driver.find_element(By.XPATH, "(//div[contains(@class, 'result-type')])[1]").text 
                 except Exception:
                     time.sleep(0.1)
@@ -120,9 +136,10 @@ def run_telegram_bot():
                             current_bet_index = 0
 
                 bet_amount = betting_levels[current_bet_index]
+                pred_upper = str(current_prediction).upper()
                 
                 # Pudhu Prediction Message Format
-                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {current_prediction}\n💰 : {bet_amount}X"
+                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {pred_upper}\n💰 : {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
@@ -133,6 +150,9 @@ def run_telegram_bot():
         
         time.sleep(0.05)
 
+# ==========================================
+# 3. RUN BOTH FLASK SERVER & BOT
+# ==========================================
 if __name__ == '__main__':
     bot_thread = threading.Thread(target=run_telegram_bot)
     bot_thread.start()
