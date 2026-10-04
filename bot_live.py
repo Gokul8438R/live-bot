@@ -38,9 +38,9 @@ def run_telegram_bot():
         except Exception:
             pass
 
-    def send_win_message(prediction):
-        pred_upper = str(prediction).upper()
-        msg = f"{pred_upper} ✅ WIN WIN WIN! ✅"
+    # புதிய Win Message Format
+    def send_win_message():
+        msg = "You Are WIN! ✅\nGo to Next Step"
         send_telegram_message(msg)
 
     def send_promo_message():
@@ -87,7 +87,7 @@ def run_telegram_bot():
 
                 if last_period_number is not None:
                     if last_predicted_size and last_predicted_size.lower() in actual_last_result.lower():
-                        send_win_message(last_predicted_size)
+                        send_win_message()
                         current_bet_index = 0  
                         consecutive_wins += 1  
                         
@@ -109,7 +109,8 @@ def run_telegram_bot():
                 bet_amount = betting_levels[current_bet_index]
                 pred_upper = str(current_prediction).upper()
                 
-                msg = f"🔮 LIVE PREDICTION 🔮\n\n📌 Issue: {current_period}\n👉 Predict: {pred_upper}\n💰 Betting amount: {bet_amount}X"
+                # புதிய Prediction Message Format
+                msg = f"⚡ 𝗟𝗜𝗩𝗘 ⚡\n📌 : {current_period}\n🎯 : {pred_upper}\n💰 : {bet_amount}X"
                 send_telegram_message(msg)
                 
                 last_period_number = current_period
